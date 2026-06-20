@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard – EduPredict</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3347; --accent: #6c63ff; --accent2: #00d4aa;
+    --text: #e8eaf0; --muted: #8890a8;
+    --good: #27ae60; --avg: #f39c12; --poor: #e74c3c;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 36px; height: 64px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem; font-weight: 700; color: var(--text); text-decoration: none;
+  }
+  .nav-brand .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    padding: 7px 16px; border-radius: 8px;
+    color: var(--muted); text-decoration: none; font-size: .88rem; font-weight: 500;
+    transition: all .2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    background: var(--surface2); color: var(--text);
+  }
+  .nav-links a.active { color: var(--accent); }
+
+  .page-header {
+    padding: 40px 36px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem; font-weight: 700;
+    background: linear-gradient(135deg, #fff 40%, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .page-header p { color: var(--muted); font-size: .9rem; }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── KPI ROW ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px; margin-bottom: 28px;
+  }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 18px; text-align: center;
+  }
+  .kpi .k-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.9rem; font-weight: 700; color: var(--accent2);
+    line-height: 1;
+  }
+  .kpi .k-lbl { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .kpi.good .k-val { color: var(--good); }
+  .kpi.avg  .k-val { color: var(--avg); }
+  .kpi.poor .k-val { color: var(--poor); }
+
+  /* ── MODEL TABLE ── */
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 700; color: var(--text);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th {
+    background: var(--surface2); color: var(--muted);
+    padding: 10px 14px; text-align: left;
+    font-size: .75rem; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  th:first-child { border-radius: 8px 0 0 8px; }
+  th:last-child  { border-radius: 0 8px 8px 0; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border: none; }
+  tr.best-row td { background: rgba(108,99,255,.07); }
+  tr.best-row td:first-child { color: var(--accent); font-weight: 600; }
+
+  .acc-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .acc-bar-track {
+    flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden;
+  }
+  .acc-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .acc-num { font-weight: 600; color: var(--accent2); min-width: 42px; text-align: right; }
+
+  /* ── CHART GRID ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+    gap: 20px;
+  }
+  @media(max-width: 600px){ .chart-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .chart-card h3 {
+    font-size: .88rem; font-weight: 600; color: var(--muted);
+    margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .chart-card img { width: 100%; border-radius: 8px; }
+
+  footer {
+    text-align: center; padding: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--muted); font-size: .82rem;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">
+    <div class="dot"></div> EduPredict
+  </a>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/dashboard" class="active">Dashboard</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>📊 Analytics Dashboard</h1>
+  <p>Dataset statistics, model performance, and visual insights.</p>
+</div>
+
+<div class="container">
+  {% if stats %}
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="k-val">{{ stats.total }}</div>
+      <div class="k-lbl">Total Students</div>
+    </div>
+    <div class="kpi good">
+      <div class="k-val">{{ stats.good }}</div>
+      <div class="k-lbl">Good Performers</div>
+    </div>
+    <div class="kpi avg">
+      <div class="k-val">{{ stats.average }}</div>
+      <div class="k-lbl">Average Performers</div>
+    </div>
+    <div class="kpi poor">
+      <div class="k-val">{{ stats.poor }}</div>
+      <div class="k-lbl">Poor Performers</div>
+    </div>
+    <div class="kpi">
+      <div class="k-val">{{ stats.avg_attend }}%</div>
+      <div class="k-lbl">Avg Attendance</div>
+    </div>
+    <div class="kpi">
+      <div class="k-val">{{ stats.avg_score }}</div>
+      <div class="k-lbl">Avg Composite Score</div>
+    </div>
+    <div class="kpi">
+      <div class="k-val">{{ stats.accuracy }}%</div>
+      <div class="k-lbl">Best Model Accuracy</div>
+    </div>
+  </div>
+
+  <!-- Model comparison table -->
+  <div class="card">
+    <div class="section-title"><div class="dot"></div> Model Comparison</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Accuracy</th>
+          <th>F1 Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in stats.model_rows %}
+        <tr {% if row.name == stats.best_model %}class="best-row"{% endif %}>
+          <td>{{ row.name }}{% if row.name == stats.best_model %} ⭐{% endif %}</td>
+          <td>
+            <div class="acc-bar-wrap">
+              <div class="acc-bar-track">
+                <div class="acc-bar-fill" style="width:{{ row.acc }}%"></div>
+              </div>
+              <span class="acc-num">{{ row.acc }}%</span>
+            </div>
+          </td>
+          <td>{{ row.f1 }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:18px 22px;margin-bottom:24px;color:#e74c3c;font-size:.9rem;">
+    ⚠️ No model data found. Run <code>python run_all.py</code> first.
+  </div>
+  {% endif %}
+
+  <!-- Charts -->
+  {% if charts %}
+  <div class="section-title" style="margin-bottom:16px"><div class="dot"></div> Visualizations</div>
+  <div class="chart-grid">
+    {% if charts.dist %}
+    <div class="chart-card">
+      <h3>Performance Distribution</h3>
+      <img src="{{ charts.dist }}" alt="Performance Distribution">
+    </div>
+    {% endif %}
+    {% if charts.heatmap %}
+    <div class="chart-card">
+      <h3>Feature Correlation Heatmap</h3>
+      <img src="{{ charts.heatmap }}" alt="Correlation Heatmap">
+    </div>
+    {% endif %}
+    {% if charts.scatter %}
+    <div class="chart-card">
+      <h3>Attendance vs Composite Score</h3>
+      <img src="{{ charts.scatter }}" alt="Scatter Plot">
+    </div>
+    {% endif %}
+    {% if charts.confusion %}
+    <div class="chart-card">
+      <h3>Confusion Matrix</h3>
+      <img src="{{ charts.confusion }}" alt="Confusion Matrix">
+    </div>
+    {% endif %}
+    {% if charts.comparison %}
+    <div class="chart-card" style="grid-column: span 2;">
+      <h3>Model Accuracy & F1 Comparison</h3>
+      <img src="{{ charts.comparison }}" alt="Model Comparison">
+    </div>
+    {% endif %}
+    {% if charts.boxplot %}
+    <div class="chart-card" style="grid-column: span 2;">
+      <h3>Score Distributions by Performance</h3>
+      <img src="{{ charts.boxplot }}" alt="Score Boxplots">
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<footer>EduPredict · Student Performance Prediction · Python · scikit-learn · Flask</footer>
+</body>
+</html>

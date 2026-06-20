@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Performance Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3347;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --text: #e8eaf0;
+    --muted: #8890a8;
+    --good: #27ae60;
+    --avg: #f39c12;
+    --poor: #e74c3c;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 36px; height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem; font-weight: 700; color: var(--text);
+    text-decoration: none;
+  }
+  .nav-brand .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    padding: 7px 16px; border-radius: 8px;
+    color: var(--muted); text-decoration: none; font-size: .88rem; font-weight: 500;
+    transition: all .2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    background: var(--surface2); color: var(--text);
+  }
+  .nav-links a.active { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    padding: 64px 24px 48px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(108,99,255,.12); border: 1px solid rgba(108,99,255,.3);
+    color: #a29bfe; padding: 6px 14px; border-radius: 20px;
+    font-size: .78rem; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
+    line-height: 1.2; margin-bottom: 14px;
+    background: linear-gradient(135deg, #fff 40%, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .layout { display: grid; grid-template-columns: 1fr 400px; gap: 24px; }
+  @media(max-width: 820px){ .layout { grid-template-columns: 1fr; } }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    color: var(--text); margin-bottom: 22px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: rgba(108,99,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ── FORM ── */
+  .form-section { margin-bottom: 22px; }
+  .form-section-label {
+    font-size: .72rem; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--accent2);
+    margin-bottom: 12px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: .8rem; font-weight: 500; color: var(--muted);
+  }
+  .field input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--text); font-size: .9rem; font-family: 'Inter', sans-serif;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+  }
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108,99,255,.15);
+  }
+  .field input.error { border-color: var(--poor); }
+
+  .range-hint { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+  /* slider for attendance */
+  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  .slider-wrap input[type=range] {
+    flex: 1; accent-color: var(--accent);
+    background: transparent; border: none; padding: 0;
+  }
+  .slider-val {
+    min-width: 42px; text-align: right;
+    font-weight: 600; color: var(--accent2); font-size: .95rem;
+  }
+
+  /* ── PREDICT BUTTON ── */
+  .btn-predict {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border: none; border-radius: 10px;
+    color: #fff; font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    margin-top: 8px;
+  }
+  .btn-predict:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-predict:active { transform: translateY(0); }
+  .btn-predict:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── RESULT PANEL ── */
+  #result-panel { min-height: 320px; }
+  .result-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 280px; gap: 12px; color: var(--muted);
+    text-align: center;
+  }
+  .result-empty .big-icon { font-size: 3.5rem; opacity: .35; }
+  .result-empty p { font-size: .9rem; line-height: 1.6; max-width: 240px; }
+
+  .result-content { display: flex; flex-direction: column; gap: 20px; }
+
+  /* performance badge */
+  .perf-badge {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px; border-radius: 12px;
+    border: 1px solid;
+  }
+  .perf-badge .badge-icon {
+    font-size: 2.4rem; line-height: 1;
+  }
+  .perf-badge .badge-text .perf-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+  }
+  .perf-badge .badge-text .grade-label {
+    font-size: .85rem; color: var(--muted); margin-top: 2px;
+  }
+
+  /* confidence bar */
+  .conf-block { }
+  .conf-label {
+    display: flex; justify-content: space-between;
+    font-size: .82rem; color: var(--muted); margin-bottom: 6px;
+  }
+  .conf-track {
+    height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden;
+  }
+  .conf-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* prob bars */
+  .prob-list { display: flex; flex-direction: column; gap: 8px; }
+  .prob-item { }
+  .prob-header {
+    display: flex; justify-content: space-between;
+    font-size: .8rem; margin-bottom: 4px;
+  }
+  .prob-header .prob-name { color: var(--muted); }
+  .prob-header .prob-val { font-weight: 600; }
+  .prob-track {
+    height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden;
+  }
+  .prob-fill {
+    height: 100%; border-radius: 3px;
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* metrics row */
+  .metrics-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .metric-box {
+    background: var(--surface2); border-radius: 10px;
+    padding: 14px; text-align: center;
+  }
+  .metric-box .m-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem; font-weight: 700; color: var(--accent2);
+  }
+  .metric-box .m-lbl {
+    font-size: .75rem; color: var(--muted); margin-top: 3px;
+  }
+
+  /* advice */
+  .advice-box {
+    background: rgba(108,99,255,.07);
+    border: 1px solid rgba(108,99,255,.2);
+    border-radius: 10px; padding: 14px 16px;
+    font-size: .87rem; color: var(--muted); line-height: 1.6;
+  }
+  .advice-box .advice-head {
+    font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: .85rem;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--poor); color: #fff;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: .88rem; font-weight: 500;
+    opacity: 0; transform: translateY(10px);
+    transition: all .3s; pointer-events: none; z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── spinner ── */
+  .spinner {
+    width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin .6s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { margin-top: 40px; }
+  .how-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 16px; margin-top: 16px;
+  }
+  .how-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+  }
+  .how-num {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: .9rem; color: #fff; margin-bottom: 12px;
+  }
+  .how-card h4 { font-size: .95rem; font-weight: 600; margin-bottom: 6px; }
+  .how-card p { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+
+  footer {
+    text-align: center; padding: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--muted); font-size: .82rem;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">
+    <div class="dot"></div> EduPredict
+  </a>
+  <div class="nav-links">
+    <a href="/" class="active">Predict</a>
+    <a href="/dashboard">Dashboard</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">✦ Machine Learning Powered</div>
+  <h1>Student Performance<br>Predictor</h1>
+  <p>Enter attendance, assignments and exam scores to predict academic outcome instantly.</p>
+</div>
+
+<div class="container">
+  {% if not model_ready %}
+  <div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:18px 22px;margin-bottom:24px;color:#e74c3c;font-size:.9rem;">
+    ⚠️ Model not trained yet. Run <code>python run_all.py</code> first, then refresh this page.
+  </div>
+  {% endif %}
+
+  <div class="layout">
+    <!-- LEFT: FORM -->
+    <div class="card">
+      <div class="card-title"><div class="icon">📋</div> Student Details</div>
+
+      <div class="form-section">
+        <div class="form-section-label">Attendance</div>
+        <div class="field">
+          <label>Attendance Percentage</label>
+          <div class="slider-wrap">
+            <input type="range" id="attendance" min="0" max="100" value="75"
+              oninput="document.getElementById('att-val').textContent=this.value+'%'">
+            <span class="slider-val" id="att-val">75%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Assignment Scores (0 – 100)</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Assignment 1</label>
+            <input type="number" id="a1" min="0" max="100" placeholder="e.g. 78">
+          </div>
+          <div class="field">
+            <label>Assignment 2</label>
+            <input type="number" id="a2" min="0" max="100" placeholder="e.g. 82">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <div class="field">
+            <label>Assignment 3</label>
+            <input type="number" id="a3" min="0" max="100" placeholder="e.g. 75">
+          </div>
+          <div class="field">
+            <label>Assignment 4</label>
+            <input type="number" id="a4" min="0" max="100" placeholder="e.g. 88">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:12px;grid-template-columns:1fr 1fr">
+          <div class="field">
+            <label>Assignment 5</label>
+            <input type="number" id="a5" min="0" max="100" placeholder="e.g. 80">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Exam Scores (0 – 100)</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Midterm Score</label>
+            <input type="number" id="midterm" min="0" max="100" placeholder="e.g. 70">
+          </div>
+          <div class="field">
+            <label>Final Exam Score</label>
+            <input type="number" id="final_exam" min="0" max="100" placeholder="e.g. 74">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-predict" id="predict-btn" onclick="predict()">
+        Predict Performance
+      </button>
+    </div>
+
+    <!-- RIGHT: RESULT -->
+    <div class="card" id="result-panel">
+      <div class="card-title"><div class="icon">📊</div> Prediction Result</div>
+
+      <div class="result-empty" id="empty-state">
+        <div class="big-icon">🎓</div>
+        <p>Fill in the student details and click <strong>Predict Performance</strong> to see the result.</p>
+      </div>
+
+      <div class="result-content" id="result-content" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-section">
+    <div class="card-title" style="margin-bottom:0"><div class="icon">⚙️</div> How It Works</div>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">1</div>
+        <h4>Input Student Data</h4>
+        <p>Enter attendance percentage, scores for 5 assignments, midterm and final exam.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">2</div>
+        <h4>ML Model Predicts</h4>
+        <p>A trained Logistic Regression model (99% accuracy) analyses the data instantly.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">3</div>
+        <h4>Get the Result</h4>
+        <p>See the predicted grade, confidence score, probability breakdown, and personalised advice.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">4</div>
+        <h4>Explore Dashboard</h4>
+        <p>Visit the Dashboard tab to view charts, model comparisons, and dataset statistics.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>EduPredict · Student Performance Prediction · Python · scikit-learn · Flask</footer>
+<div id="toast"></div>
+
+<script>
+  const PERF_ICONS = { Good: "🏆", Average: "📚", Poor: "⚠️" };
+  const PROB_COLORS = { Good: "#27ae60", Average: "#f39c12", Poor: "#e74c3c" };
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3200);
+  }
+
+  function getVal(id) {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? null : v;
+  }
+
+  async function predict() {
+    const fields = ["a1","a2","a3","a4","a5","midterm","final_exam"];
+    let valid = true;
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      const v = parseFloat(el.value);
+      if (isNaN(v) || v < 0 || v > 100) {
+        el.classList.add("error"); valid = false;
+      } else el.classList.remove("error");
+    });
+    if (!valid) { showToast("Please fill all fields with values between 0–100"); return; }
+
+    const btn = document.getElementById("predict-btn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Predicting…';
+
+    const payload = {
+      attendance:   parseFloat(document.getElementById("attendance").value),
+      assignment1:  getVal("a1"), assignment2: getVal("a2"), assignment3: getVal("a3"),
+      assignment4:  getVal("a4"), assignment5:  getVal("a5"),
+      midterm:      getVal("midterm"), final_exam: getVal("final_exam"),
+    };
+
+    try {
+      const res  = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.error) { showToast(data.error); return; }
+      renderResult(data);
+    } catch (e) {
+      showToast("Connection error. Is the server running?");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Predict Performance";
+    }
+  }
+
+  function renderResult(d) {
+    document.getElementById("empty-state").style.display = "none";
+    const el = document.getElementById("result-content");
+    el.style.display = "flex";
+
+    const probRows = Object.entries(d.probabilities)
+      .sort((a,b) => b[1]-a[1])
+      .map(([name, val]) => `
+        <div class="prob-item">
+          <div class="prob-header">
+            <span class="prob-name">${name}</span>
+            <span class="prob-val" style="color:${PROB_COLORS[name]}">${val}%</span>
+          </div>
+          <div class="prob-track">
+            <div class="prob-fill" style="width:0%;background:${PROB_COLORS[d.performance]}"
+              data-w="${val}"></div>
+          </div>
+        </div>`).join("");
+
+    el.innerHTML = `
+      <div class="perf-badge" style="background:${d.color}18;border-color:${d.color}44">
+        <div class="badge-icon">${PERF_ICONS[d.performance]}</div>
+        <div class="badge-text">
+          <div class="perf-label" style="color:${d.color}">${d.performance}</div>
+          <div class="grade-label">Expected Grade: <strong>${d.grade}</strong></div>
+        </div>
+      </div>
+
+      <div class="conf-block">
+        <div class="conf-label">
+          <span>Model Confidence</span>
+          <span style="font-weight:600;color:var(--accent2)">${d.confidence}%</span>
+        </div>
+        <div class="conf-track">
+          <div class="conf-fill" id="conf-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:.75rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px">Probability Breakdown</div>
+        <div class="prob-list">${probRows}</div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-box">
+          <div class="m-val">${d.composite}</div>
+          <div class="m-lbl">Composite Score</div>
+        </div>
+        <div class="metric-box">
+          <div class="m-val">${d.avg_assignment}</div>
+          <div class="m-lbl">Assignment Avg</div>
+        </div>
+      </div>
+
+      <div class="advice-box">
+        <div class="advice-head">💡 Recommendation</div>
+        ${d.advice}
+      </div>`;
+
+    // animate bars
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById("conf-bar").style.width = d.confidence + "%";
+        el.querySelectorAll(".prob-fill").forEach(b => b.style.width = b.dataset.w + "%");
+      });
+    });
+  }
+</script>
+</body>
+</html>
